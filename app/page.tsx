@@ -1,103 +1,159 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useEffect, useMemo, useState } from "react";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+type Kind = "root" | "sprout";              // root=向下扎根  sprout=向上生长
+type Task = { id: string; title: string; done: boolean; kind: Kind };
+
+const LS_KEY = "tasks:v2";
+
+export default function HomePage() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [title, setTitle] = useState("");
+  const [kind, setKind] = useState<Kind>("root");
+
+  // —— 启动时读取 & 变更时保存 ——
+  useEffect(() => {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      try { setTasks(JSON.parse(raw)); } catch {}
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(LS_KEY, JSON.stringify(tasks));
+  }, [tasks]);
+
+  // —— 计算两个分栏 ——
+  const roots = useMemo(() => tasks.filter(t => t.kind === "root"), [tasks]);
+  const sprouts = useMemo(() => tasks.filter(t => t.kind === "sprout"), [tasks]);
+
+  // —— 事件 ——
+  const addTask = () => {
+    const t = title.trim();
+    if (!t) return;
+    setTasks([{ id: crypto.randomUUID(), title: t, done: false, kind }, ...tasks]);
+    setTitle("");
+  };
+
+  const toggle = (id: string) =>
+    setTasks(tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t)));
+
+  const remove = (id: string) =>
+    setTasks(tasks.filter(t => t.id !== id));
+
+  const clearCompleted = (k?: Kind) => {
+    if (!k) setTasks(tasks.filter(t => !t.done));
+    else setTasks(tasks.filter(t => !(t.kind === k && t.done)));
+  };
+
+  const Section = ({
+    label,
+    data,
+    color,
+  }: {
+    label: string;
+    data: Task[];
+    color: string; // 如 text-emerald-800
+  }) => (
+    <div className="bg-white rounded-xl shadow p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className={`text-xl font-semibold ${color}`}>{label}</h2>
+        <button
+          onClick={() =>
+            clearCompleted(label.includes("扎根") ? "root" : "sprout")
+          }
+          className="text-sm text-gray-600 hover:underline"
+        >
+          清除已完成
+        </button>
+      </div>
+
+      <ul className="space-y-2">
+        {data.map((t) => (
+          <li
+            key={t.id}
+            className="flex items-center gap-3 border rounded px-3 py-2 text-gray-900"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            <input
+              type="checkbox"
+              checked={t.done}
+              onChange={() => toggle(t.id)}
+              className="h-4 w-4"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <span
+              className={`flex-1 ${
+                t.done ? "line-through text-gray-400" : ""
+              }`}
+            >
+              {t.title}
+            </span>
+            <button
+              onClick={() => remove(t.id)}
+              className="text-red-500 text-sm hover:underline"
+              title="删除"
+            >
+              删除
+            </button>
+          </li>
+        ))}
+        {data.length === 0 && (
+          <li className="text-gray-500 text-sm">暂无任务</li>
+        )}
+      </ul>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 text-gray-900">
+      <div className="bg-white rounded-xl shadow p-6">
+        <h1 className="text-3xl font-bold text-center mb-6 text-emerald-700">
+          🌱 向下扎根 · 向上生长
+        </h1>
+
+        {/* 输入区 */}
+        <div className="flex flex-col md:flex-row gap-2">
+          <input
+            className="border rounded px-3 py-2 flex-1 text-gray-900"
+            placeholder="输入一条任务…"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addTask()}
+          />
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as Kind)}
+            className="border rounded px-3 py-2 md:w-44"
+            title="分类"
           >
-            Read our docs
-          </a>
+            <option value="root">🪷 向下扎根（冥想/阅读/复盘…）</option>
+            <option value="sprout">🌻 向上生长（工作/社交/学习…）</option>
+          </select>
+          <button
+            onClick={addTask}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl md:w-28"
+          >
+            添加
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* 汇总信息 */}
+        <div className="mt-3 text-sm text-gray-600">
+          共 {tasks.length} 项 · 已完成 {tasks.filter(t => t.done).length} 项
+          <button
+            onClick={() => clearCompleted()}
+            className="ml-3 text-gray-600 hover:underline"
+            title="清理所有已完成"
+          >
+            清除所有已完成
+          </button>
+        </div>
+      </div>
+
+      {/* 分栏 */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Section label="🪷 向下扎根" data={roots} color="text-emerald-800" />
+        <Section label="🌻 向上生长" data={sprouts} color="text-amber-700" />
+      </div>
     </div>
   );
 }
