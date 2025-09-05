@@ -9,10 +9,10 @@ function SimpleNav() {
       <nav className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
         <Link href="/" className="font-semibold">🌱 Root & Sprout</link>
         <div className="flex gap-2">
-          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/">📝 To-do</Link>
-          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/meditation">🧘 冥想</Link>
-          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/journal">📓 日记</Link>
-          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/habit">📅 打卡</Link>
+          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/">📝 To-do</ Link>
+          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/meditation">🧘 冥想</ Link>
+          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/journal">📓 日记</ Link>
+          <Link className="px-3 py-1.5 rounded-xl text-sm hover:bg-green-50 text-gray-700 border border-transparent hover:border-green-200" href="/habit">📅 打卡</ Link>
         </div>
       </nav>
     </header>
